@@ -143,8 +143,14 @@ void converte(unsigned char *valor, int size){
 }
 
 void printHexa(unsigned char *hex, int size){
-  int i;
+  int i, flag = 0;
+  printf("(0x");
   for (i=0;i<size; i++){
+    if(hex[i] == 0 && flag ==0)
+      continue;
+
+    flag  = 1;
     printf("%02X",hex[i]);
   }
+  printf(")");
 }
