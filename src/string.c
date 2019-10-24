@@ -65,3 +65,86 @@ for (i=0; i < size; i++){
 }
 destino[i] = '\0';
 }
+
+void printBits(size_t const size, void const * const ptr)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j;
+
+
+
+    for (i=0;i<size;i++)
+    {
+        for (j=7;j>=0;j--)
+        {
+            byte = (b[i] >> j) & 1;
+            printf("%u", byte);
+        }
+        printf(" | ");
+    }
+    puts("");
+}
+int power(int base,int expoente){
+  int resultado;
+  if(expoente == 0)
+    return 1;
+  else{
+    int i;
+    resultado = base;
+    for (i=1; i< expoente; i++){
+      resultado = resultado * base;
+    }
+  }
+  return resultado;
+
+}
+int binToDec(void const * const ptr)
+{
+    unsigned char *b = (unsigned char*) ptr;
+    unsigned char byte;
+    int i, j, k=0, aux = 0, size = 4;
+
+    int resultado = 0;
+
+    for (i=size-1;i>=0;i--)
+    {
+        for (j=0;j<8;j++)
+        {
+            byte = (b[i] >> j) & 1;
+            aux = byte * power(2,k);
+            resultado = resultado + aux;
+            k++;
+        }
+    }
+    return resultado;
+}
+
+void converteParaBigEndian(unsigned char *valor, int size){
+  int i;
+  unsigned char aux;
+  size = size -1;
+  for (i=0; i <= (size/2); i++){
+      aux = valor[i];
+      valor[i] = valor[size-i];
+      valor[size-i] = aux;
+  }
+
+
+}
+void converte(unsigned char *valor, int size){
+  unsigned char aux;
+  aux = valor[2];
+  valor[2] = valor[1];
+  valor[3] = valor[0];
+  valor[0] = aux;
+  valor[1] = aux;
+
+}
+
+void printHexa(unsigned char *hex, int size){
+  int i;
+  for (i=0;i<size; i++){
+    printf("%02X",hex[i]);
+  }
+}
