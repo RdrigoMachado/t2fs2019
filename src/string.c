@@ -56,18 +56,17 @@ void copiarMemoria(char *destino, char *origem, int size){
 }
 
 void copiarMemoriaParaString(char *destino, char *origem, int size){
-int i = 0;
-if (size <= 0)
-  return;
+  int i = 0;
+  if (size <= 0)
+    return;
 
-for (i=0; i < size; i++){
-  destino[i] = origem[i];
-}
-destino[i] = '\0';
+  for (i=0; i < size; i++){
+    destino[i] = origem[i];
+  }
+  destino[i] = '\0';
 }
 
-void printBits(size_t const size, void const * const ptr)
-{
+void printBits(size_t const size, void const * const ptr){
     unsigned char *b = (unsigned char*) ptr;
     unsigned char byte;
     int i, j;
@@ -85,6 +84,7 @@ void printBits(size_t const size, void const * const ptr)
     }
     puts("");
 }
+
 int power(int base,int expoente){
   int resultado;
   if(expoente == 0)
@@ -99,8 +99,8 @@ int power(int base,int expoente){
   return resultado;
 
 }
-int binToDec(void const * const ptr)
-{
+
+int binToDec(void const * const ptr){
     unsigned char *b = (unsigned char*) ptr;
     unsigned char byte;
     int i, j, k=0, aux = 0, size = 4;
@@ -130,8 +130,8 @@ void converteParaBigEndian(unsigned char *valor, int size){
       valor[size-i] = aux;
   }
 
-
 }
+
 void converte(unsigned char *valor, int size){
   unsigned char aux;
   aux = valor[2];
@@ -139,7 +139,16 @@ void converte(unsigned char *valor, int size){
   valor[3] = valor[0];
   valor[0] = aux;
   valor[1] = aux;
+}
 
+
+int converteDoisBytesParaInt(unsigned char *ponteiro){
+  unsigned char* ponteiroAuxiliar;
+  int valorConvertido = 0;
+  ponteiroAuxiliar = (unsigned char*) &valorConvertido;
+  ponteiroAuxiliar[0] = ponteiro[0];
+  ponteiroAuxiliar[1] = ponteiro[1];
+  return valorConvertido;
 }
 
 void printHexa(unsigned char *hex, int size){

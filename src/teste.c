@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//0x7E32 em inteiro
+#define VERSAO 32306
+
 typedef struct particao{
   int posicao_inicio;
   int posicao_final;
@@ -11,6 +14,19 @@ typedef struct particao{
   int area_inodes;
   int area_dados;
 }Particao;
+
+typedef struct superbloco{
+  unsigned char id[4];
+  int versao;
+  int superblockSize;
+  int freeBlocksBitmapSize;
+  int freeInodeBitmapSize;
+  int inodeAreaSize;
+  int blockSize;
+  int diskSize;
+  unsigned char Checksum[4];
+  unsigned char reservado[232];
+}SuperBloco;
 
 Particao particoes[4];
 
@@ -132,21 +148,89 @@ int main(){
 
  }
 
-  printf("---------------------------------------------------------------\n");
-  printf("Versao: ");                                           printHexa(versao, 2);          printf("\n");
-  printf("Tamanho: ");                                          printHexa(tam_setor, 2);       printf("\n");
-  printf("Byte inicial: ");                                     printHexa(byte_inicial, 2);    printf("\n");
-  printf("Quantidade part: ");                                  printHexa(quant_particoes, 2); printf("\n");
+  printf("------------------------------------------------------------\n");
+  printf("Versao: ");          printHexa(versao, 2);          printf("\n");
+  printf("Tamanho: ");         printHexa(tam_setor, 2);       printf("\n");
+  printf("Byte inicial: ");    printHexa(byte_inicial, 2);    printf("\n");
+  printf("Quantidade part: "); printHexa(quant_particoes, 2); printf("\n");
 
   for (index = 0; index < 4; index++){
     printf("---------------------------------------------------------------\n");
-    printf("Nome part%d\n", index);
+    printf("--Particao %d--\n", index);
     printf("Inicio       : %d\n", particoes[index].posicao_inicio);
     printf("Fim          : %d\n", particoes[index].posicao_final );
     printf("Blocos Inode : %d\n", particoes[index].area_inodes   );
     printf("Blocos Dados : %d\n", particoes[index].area_dados    );
     printf("Bitmap Inodes: %d\n", particoes[index].bitmap_inodes );
     printf("Bitmap Dados : %d\n", particoes[index].bitmap_dados  );
+
+
+    //Preencher SuperBloco------------------------------------------------------
+    unsigned char  bloco[256];
+    unsigned char  id[4];
+    unsigned char* ponteiroAuxiliar;
+    int            versao           = 32306;
+    int            superblockSize   = 1;
+    int            blocosParticao   = (particoes[index].posicao_final - particoes[index].posicao_inicio)/setoresPorBloco;
+
+    id[0] = 'T';id[1] = '2'; id[2] = 'F'; id[3] = 'S';
+    copiarMemoria((char*) bloco, (char*) id, 4);
+
+    //converteParaBigEndian((unsigned char*) &versao, 2);
+    ponteiroAuxiliar = (unsigned char*) &versao;
+    copiarMemoria((char*) &bloco[4], (char*) ponteiroAuxiliar, 2);
+
+    ponteiroAuxiliar = (unsigned char*) &superblockSize;
+    copiarMemoria((char*) &bloco[6], (char*) ponteiroAuxiliar, 2);
+
+    ponteiroAuxiliar = (unsigned char*) &particoes[index].bitmap_dados;
+    copiarMemoria((char*) &bloco[8], (char*) ponteiroAuxiliar, 2);
+
+    ponteiroAuxiliar = (unsigned char*) &particoes[index].bitmap_inodes;
+    copiarMemoria((char*) &bloco[10], (char*) ponteiroAuxiliar, 2);
+
+    ponteiroAuxiliar = (unsigned char*) &particoes[index].area_inodes;
+    copiarMemoria((char*) &bloco[12], (char*) ponteiroAuxiliar, 2);
+
+    ponteiroAuxiliar = (unsigned char*) &setoresPorBloco;
+    copiarMemoria((char*) &bloco[14], (char*) ponteiroAuxiliar, 2);
+
+    ponteiroAuxiliar = (unsigned char*) &blocosParticao;
+    copiarMemoria((char*) &bloco[16], (char*) ponteiroAuxiliar, 4);
+
+
+    // recuperar e printar superbloco
+    printf("\n--SuperBloco--\n");
+    SuperBloco superbloco;
+    copiarMemoria((char*) &(superbloco.id), (char*) &bloco, 4);
+    printf("ID: ");
+    int x;
+    for(x=0; x<4; x++){
+      printf("%c", superbloco.id[x]);
+    }
+
+    superbloco.versao               = converteDoisBytesParaInt((unsigned char*) &bloco[4]);
+    printf("\nVersao: %X\n", superbloco.versao);
+
+    superbloco.superblockSize       = converteDoisBytesParaInt((unsigned char*) &bloco[6]);
+    printf("Tamanho SuperBloco: %d\n", superbloco.superblockSize);
+
+    superbloco.freeBlocksBitmapSize = converteDoisBytesParaInt((unsigned char*) &bloco[8]);
+    printf("Tamanho Bitmap Dados: %d\n", superbloco.freeBlocksBitmapSize);
+
+    superbloco.freeInodeBitmapSize  = converteDoisBytesParaInt((unsigned char*) &bloco[10]);
+    printf("Tamanho Bitmap Inodes: %d\n", superbloco.freeInodeBitmapSize);
+
+    superbloco.inodeAreaSize        = converteDoisBytesParaInt((unsigned char*) &bloco[12]);
+    printf("Tamanho Area Inodes: %d\n", superbloco.inodeAreaSize);
+
+    superbloco.blockSize            = converteDoisBytesParaInt((unsigned char*) &bloco[14]);
+    printf("Tamanho do Bloco: %d\n", superbloco.blockSize);
+
+    superbloco.diskSize = converteDoisBytesParaInt((unsigned char*) &bloco[16]);
+    printf("Tamanho Disco em Blocos: %d\n", superbloco.diskSize);
+
+
   }
 
   return 0;
