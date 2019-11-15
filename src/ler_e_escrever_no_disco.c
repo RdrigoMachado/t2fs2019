@@ -7,7 +7,10 @@
 
 //0x7E32 em inteiro
 #define VERSAO 32306
+#define FALHA -1
+#define SUCESSO 0
 int tamanho_setor;
+
 
 typedef struct superbloco{
   unsigned char id[4];
@@ -28,7 +31,7 @@ typedef struct particao{
 } Particao;
 
 Particao particoes[4];
-
+SuperBloco super_bloco_atual;
 
 int retornaSetorDoSuperBloco(int numero_particao){
   return particoes[numero_particao].posicao_inicio;
@@ -127,140 +130,27 @@ void le_MBR_Preenche_Dados_Particoes(){
   }
 }
 
-void format(int numero_particao, int setores_por_bloco){
+int formatarParticao(int numero_particao, int setores_por_bloco){
   SuperBloco super_bloco_sendo_formatado;
 
   geraSuperBlocoESalva(numero_particao, setores_por_bloco);
-
   leSetorEPreencheStructSuperBloco(&super_bloco_sendo_formatado, numero_particao);
 
   if(openBitmap2 (retornaSetorDoSuperBloco(numero_particao)) != 0){
-    printf("Erro ao abrir BITMAPS\n");
-    return;
+    return FALHA;
   }
 
   int index;
   for(index = 0; index < super_bloco_sendo_formatado.diskSize; index++){
     if (setBitmap2 (BITMAP_DADOS, index, 0) != 0){
-      printf("Erro ao escrever no bitmap %d\n", index);
-      return;
+      return FALHA;
     }
   }
 
   for(index = 0; index< super_bloco_sendo_formatado.inodeAreaSize; index++){
     if (setBitmap2 (BITMAP_INODE, index, 0) != 0){
-      printf("Erro ao escrever no bitmap  %d\n", index);
-      return;
+      return FALHA;
     }
   }
-}
-
-//=============================================================================
-//=============================================================================
-// DEBUG
-unsigned char           versao[2] ;
-unsigned char        tam_setor[2] ;
-unsigned char     byte_inicial[2] ;
-unsigned char  quant_particoes[2] ;
-
-void printDadosMBReParticoes(){
-  unsigned char         buffer[256] ;
-
-  read_sector(0, buffer);
-
-  copiarMemoria((char*) versao,           (char*)  &buffer[0] , 2);
-  copiarMemoria((char*) tam_setor,        (char*)  &buffer[2] , 2);
-  copiarMemoria((char*) byte_inicial,     (char*)  &buffer[4] , 2);
-  copiarMemoria((char*) quant_particoes,  (char*)  &buffer[6] , 2);
-  converteParaBigEndian(versao, 2);
-  converteParaBigEndian(byte_inicial, 2);
-  converteParaBigEndian(quant_particoes, 2);
-
-  printf("------------------------------------------------------------\n");
-  printf("Versao: ");          printHexa(versao, 2);          printf("\n");
-  printf("Tamanho: ");         printHexa(tam_setor, 2);       printf("\n");
-  printf("Byte inicial: ");    printHexa(byte_inicial, 2);    printf("\n");
-  printf("Quantidade part: "); printHexa(quant_particoes, 2); printf("\n");
-
-  int index;
-  for (index = 0; index < 4; index++){
-    printf("---------------------------------------------------------------\n");
-    printf("--Particao %d--\n", index);
-    printf("Inicio       : %d\n", particoes[index].posicao_inicio);
-    printf("Fim          : %d\n", particoes[index].posicao_fim );
-  }
-}
-
-void printSuperBloco(SuperBloco super_bloco){
-  printf("---------------------------------------------------------------\n");
-  printf("--Super Bloco--\n");
-  printf("Id: ");
-  int index;
-  for (index=0; index<4;index++)
-  printf("%c", super_bloco.id[index]);
-
-  printf("\n");
-  printf("Versao: %X\n", super_bloco.versao);
-  printf("SuperBlock Size: %d\n", super_bloco.superblockSize);
-  printf("freeBlocksBitmapSize: %d\n", super_bloco.freeBlocksBitmapSize);
-  printf("freeInodeBitmapSize: %d\n", super_bloco.freeInodeBitmapSize);
-  printf("inodeAreaSize: %d\n", super_bloco.inodeAreaSize);
-  printf("blockSize: %d\n", super_bloco.blockSize);
-  printf("diskSize: %d\n", super_bloco.diskSize);
-}
-
-void printBITMAPS(int numero_particao){
-  SuperBloco super_bloco;
-  leSetorEPreencheStructSuperBloco(&super_bloco, numero_particao);
-  int index;
-  int bit;
-  for(index = 0; index < super_bloco.diskSize; index++){
-    bit = getBitmap2 (BITMAP_DADOS, index);
-    if (bit < 0){
-      printf("Erro ao escrever no bitmap %d\n", index);
-      return;
-    }
-    printf("%d", bit);
-
-  }
-  printf("\n");
-
-  for(index = 0; index< super_bloco.inodeAreaSize; index++){
-    bit = getBitmap2 (BITMAP_INODE, index);
-    if (bit < 0){
-      printf("Erro ao escrever no bitmap  %d\n", index);
-      return;
-    }
-    printf("%d", bit);
-  }
-  printf("\n");
-
-}
-//=============================================================================
-//=============================================================================
-
-
-
-SuperBloco super_bloco_atual;
-
-
-int main(){
-  le_MBR_Preenche_Dados_Particoes();
-  printDadosMBReParticoes();
-
-  int index;
-  for(index = 0; index<4; index++){
-    format(index, 4);
-    leSetorEPreencheStructSuperBloco(&super_bloco_atual, index);
-    printSuperBloco(super_bloco_atual);
-
-    printf("=====================================\n");
-    printf("=====================================\n");
-    printBITMAPS(index);
-
-  }
-
-
-
-  return 0;
+  return SUCESSO;
 }

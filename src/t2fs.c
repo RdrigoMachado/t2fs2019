@@ -1,7 +1,19 @@
 
 /**
 */
+#include "../include/apidisk.h"
+#include "../include/string.h"
+#include "../include/ler_e_escrever_no_disco.h"
+#include "../include/bitmap2.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 #include "t2fs.h"
+
+void inicializar(){
+	le_MBR_Preenche_Dados_Particoes();
+}
+
 
 /*-----------------------------------------------------------------------------
 Função:	Informa a identificação dos desenvolvedores do T2FS.
@@ -12,11 +24,13 @@ int identify2 (char *name, int size) {
 
 /*-----------------------------------------------------------------------------
 Função:	Formata logicamente uma partição do disco virtual t2fs_disk.dat para o sistema de
-		arquivos T2FS definido usando blocos de dados de tamanho 
+		arquivos T2FS definido usando blocos de dados de tamanho
 		corresponde a um múltiplo de setores dados por sectors_per_block.
 -----------------------------------------------------------------------------*/
 int format2(int partition, int sectors_per_block) {
-	return -1;
+	if(inicializada == FALSE)
+		inicializar();
+	return formatarParticao(partition, sectors_per_block);
 }
 
 /*-----------------------------------------------------------------------------
@@ -36,8 +50,8 @@ int unmount(void) {
 /*-----------------------------------------------------------------------------
 Função:	Função usada para criar um novo arquivo no disco e abrí-lo,
 		sendo, nesse último aspecto, equivalente a função open2.
-		No entanto, diferentemente da open2, se filename referenciar um 
-		arquivo já existente, o mesmo terá seu conteúdo removido e 
+		No entanto, diferentemente da open2, se filename referenciar um
+		arquivo já existente, o mesmo terá seu conteúdo removido e
 		assumirá um tamanho de zero bytes.
 -----------------------------------------------------------------------------*/
 FILE2 create2 (char *filename) {
@@ -45,7 +59,7 @@ FILE2 create2 (char *filename) {
 }
 
 /*-----------------------------------------------------------------------------
-Função:	Função usada para remover (apagar) um arquivo do disco. 
+Função:	Função usada para remover (apagar) um arquivo do disco.
 -----------------------------------------------------------------------------*/
 int delete2 (char *filename) {
 	return -1;
@@ -115,6 +129,3 @@ Função:	Função usada para criar um caminho alternativo (hardlink)
 int hln2(char *linkname, char *filename) {
 	return -1;
 }
-
-
-
