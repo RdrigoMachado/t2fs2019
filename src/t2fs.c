@@ -37,6 +37,7 @@ int format2(int partition, int sectors_per_block) {
 Função:	Monta a partição indicada por "partition" no diretório raiz
 -----------------------------------------------------------------------------*/
 int mount(int partition) {
+
 	return -1;
 }
 
