@@ -18,15 +18,13 @@
 #define MAXIMO_ARQUIVOS_ABERTOS 10
 
 int tamanho_setor;
-int limite_caso_1;
-int limite_caso_2;
-int limite_caso_3;
 int maior_bloco_caso_1;
 int maior_bloco_caso_2;
 int maior_bloco_caso_3;
 int ponteiros_por_bloco;
-int posicao_atual;
 int bytes_bloco;
+int inicioAreaDados;
+int inicioAreaInodes;
 
 typedef struct superbloco{
   unsigned char id[4];
@@ -64,5 +62,5 @@ int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco);
 void leSetorEPreencheStructSuperBloco(SuperBloco *super_bloco, int numero_particao);
 void le_MBR_Preenche_Dados_Particoes();
 int formatarParticao(int numero_particao, int setores_por_bloco);
-int leitura_arquivo(unsigned char* buffer, int bytes_a_serem_lidos, Handle handle);
+int leitura_arquivo(unsigned char* buffer, int bytes_a_serem_lidos, Handle* handle);
 #endif

@@ -101,7 +101,7 @@ Função:	Função usada para realizar a leitura de uma certa quantidade
 int read2 (FILE2 handle, char *buffer, int size) {
 	if(inicializada == FALSE)
 		inicializar();
-	return leitura_arquivo((unsigned char*) buffer, size, arquivos[handle]);
+	return leitura_arquivo((unsigned char*) buffer, size, &arquivos[handle]);
 }
 
 /*-----------------------------------------------------------------------------
