@@ -1,5 +1,6 @@
 #include "../include/string.h"
 
+
 void copiarString(char *destino, char *origem){
   int i = 0;
   while(origem[i] != '\0'){
@@ -28,13 +29,13 @@ int verificaSePrimeiraPalavraEMenor(char *string1, char *string2){
     int i = 0;
     while (string1[i] != '\0' && string2[i] != '\0') {
       if (charUpperCase(string1[i]) < charUpperCase(string2[i]))
-        return true;
+        return TRUE;
       if (charUpperCase(string1[i]) > charUpperCase(string2[i]))
-        return false;
+        return FALSE;
       i++;
     }
 
-    return false;
+    return FALSE;
 }
 
 int stringSize(char *nome){
