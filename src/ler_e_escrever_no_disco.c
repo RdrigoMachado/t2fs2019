@@ -36,7 +36,6 @@ void init(int numero_particao){
 
   int tamanhoParticaoEmSetores  = particoes[numero_particao].posicao_fim - particoes[numero_particao].posicao_inicio;
   int numeroBlocosNaParticao    = tamanhoParticaoEmSetores / particoes[numero_particao].tamanho_bloco_em_setores;
-
   // 10% para blocos de inode
   int areaInodeEmBlocos         = (numeroBlocosNaParticao / 10);
   if(numeroBlocosNaParticao % 10 > 0)
@@ -79,6 +78,7 @@ void carregaDadosParticao(SuperBloco *super_bloco, int numero_particao){
   super_bloco->blockSize             = converteDoisBytesParaInt((unsigned char*) &buffer_super_bloco[14]);
   super_bloco->diskSize              = converteDoisBytesParaInt((unsigned char*) &buffer_super_bloco[16]);
   particoes[numero_particao].tamanho_bloco_em_setores = super_bloco->blockSize;
+  //printf("block size %d\n", particoes[numero_particao].tamanho_bloco_em_setores);
   init(numero_particao);
 }
 
@@ -107,7 +107,14 @@ int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco){
   ponteiroAuxiliar = (unsigned char*) &particoes[numero_particao].area_inode_em_blocos;
   copiarMemoria((char*) &bloco[12], (char*) ponteiroAuxiliar, 2);
   ponteiroAuxiliar = (unsigned char*) &setores_por_bloco;
+  printf("setore bloco %d\n", setores_por_bloco );
   copiarMemoria((char*) &bloco[14], (char*) ponteiroAuxiliar, 2);
+  int teste;
+  unsigned char a[2];
+  copiarMemoria((char*) a, (char*) &bloco[14], 2);
+  teste = converteDoisBytesParaInt(a);
+  printf("teste setore bloco %d\n", teste );
+
   ponteiroAuxiliar = (unsigned char*) &particoes[numero_particao].blocos_disco;
   copiarMemoria((char*) &bloco[16], (char*) ponteiroAuxiliar, 4);
 

@@ -191,57 +191,57 @@ int main(){
 
   carregaDadosDisco();
   int index = 0;
-  // for(index =0; index<4 ; index++){
-  formatarParticao(index, 4);
+   for(index =0; index<4 ; index++){
+     //formatarParticao(index, 4);
+
+    carregaDadosParticao(&super_bloco_atual, index);
+    printf("Inicio %d: %d\n",index, particoes[index].posicao_inicio );
+    printf("Fim %d: %d\n",index, particoes[index].posicao_fim );
+    printf("Bloco inicio inodes: %d\n", particoes[index].posicao_area_inodes );
+    printf("Bloco inicio dados: %d\n", particoes[index].posicao_area_dados );
+    printf("Area Inode: %d \n\n\n\n",super_bloco_atual.inodeAreaSize );
+  }
+  // carregaDadosParticao(&super_bloco_atual, 0);
   //
-  //   carregaDadosParticao(&super_bloco_atual, index);
-  //   printf("Inicio %d: %d\n",index, particoes[index].posicao_inicio );
-  //   printf("Fim %d: %d\n",index, particoes[index].posicao_fim );
-  //   printf("Bloco inicio inodes: %d\n", particoes[index].posicao_area_inodes );
-  //   printf("Bloco inicio dados: %d\n", particoes[index].posicao_area_dados );
-  //   printf("Area Inode: %d \n\n\n\n",super_bloco_atual.inodeAreaSize );
+  //
+  //
+  // Handle handle;
+  // handle.posicao_atual          = 0;
+  // handle.arquivo.blocksFileSize = 0;
+  // handle.arquivo.bytesFileSize  = 0;
+  // handle.arquivo.dataPtr[0]     = -1;
+  // handle.arquivo.dataPtr[1]     = -1;
+  // handle.arquivo.singleIndPtr   = -1;
+  // handle.arquivo.doubleIndPtr   = -1;
+  // handle.arquivo.RefCounter     = 0;
+  //
+  //
+  // char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
+  // for(index = 0; index < 80; index++){
+  //   struct t2fs_record novo;
+  //   novo.TypeVal = TYPEVAL_REGULAR;
+  //   copiarMemoria(novo.name, nome, 9);
+  //
+  //   if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
+  //     printf("Erro\n");
+  //   else{
+  //     printf("===============================================================\n");
+  //     printf("pointer0 %d - ponter1 %d - pointerSingle %d - pointerDoubl %d\n", handle.arquivo.dataPtr[0],handle.arquivo.dataPtr[1],handle.arquivo.singleIndPtr, handle.arquivo.doubleIndPtr );
+  //     printf("Size %d\n", handle.arquivo.bytesFileSize);
+  //   }
   // }
-  carregaDadosParticao(&super_bloco_atual, 0);
-
-
-
-  Handle handle;
-  handle.posicao_atual          = 0;
-  handle.arquivo.blocksFileSize = 0;
-  handle.arquivo.bytesFileSize  = 0;
-  handle.arquivo.dataPtr[0]     = -1;
-  handle.arquivo.dataPtr[1]     = -1;
-  handle.arquivo.singleIndPtr   = -1;
-  handle.arquivo.doubleIndPtr   = -1;
-  handle.arquivo.RefCounter     = 0;
-
-
-  char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
-  for(index = 0; index < 80; index++){
-    struct t2fs_record novo;
-    novo.TypeVal = TYPEVAL_REGULAR;
-    copiarMemoria(novo.name, nome, 9);
-
-    if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
-      printf("Erro\n");
-    else{
-      printf("===============================================================\n");
-      printf("pointer0 %d - ponter1 %d - pointerSingle %d - pointerDoubl %d\n", handle.arquivo.dataPtr[0],handle.arquivo.dataPtr[1],handle.arquivo.singleIndPtr, handle.arquivo.doubleIndPtr );
-      printf("Size %d\n", handle.arquivo.bytesFileSize);
-    }
-  }
-  handle.posicao_atual = 0;
-  printf("Leitura\n" );
-  for(index = 0; index < 80; index++){
-    struct t2fs_record novo;
-    if(leitura_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
-      printf("Erro\n");
-    else{
-      printf("===============================================================\n");
-      printf("nome  %s \n", novo.name );
-      printf("Size %d\n", handle.posicao_atual);
-    }
-  }
+  // handle.posicao_atual = 0;
+  // printf("Leitura\n" );
+  // for(index = 0; index < 80; index++){
+  //   struct t2fs_record novo;
+  //   if(leitura_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
+  //     printf("Erro\n");
+  //   else{
+  //     printf("===============================================================\n");
+  //     printf("nome  %s \n", novo.name );
+  //     printf("Size %d\n", handle.posicao_atual);
+  //   }
+  // }
 
   return 0;
 }
