@@ -107,13 +107,11 @@ int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco){
   ponteiroAuxiliar = (unsigned char*) &particoes[numero_particao].area_inode_em_blocos;
   copiarMemoria((char*) &bloco[12], (char*) ponteiroAuxiliar, 2);
   ponteiroAuxiliar = (unsigned char*) &setores_por_bloco;
-  printf("setore bloco %d\n", setores_por_bloco );
   copiarMemoria((char*) &bloco[14], (char*) ponteiroAuxiliar, 2);
   int teste;
   unsigned char a[2];
   copiarMemoria((char*) a, (char*) &bloco[14], 2);
   teste = converteDoisBytesParaInt(a);
-  printf("teste setore bloco %d\n", teste );
 
   ponteiroAuxiliar = (unsigned char*) &particoes[numero_particao].blocos_disco;
   copiarMemoria((char*) &bloco[16], (char*) ponteiroAuxiliar, 4);
