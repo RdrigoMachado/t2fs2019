@@ -23,8 +23,8 @@ int maior_bloco_caso_2;
 int maior_bloco_caso_3;
 int ponteiros_por_bloco;
 int bytes_bloco;
-int inicioAreaDados;
-int inicioAreaInodes;
+int tamanho_bloco_em_setores;
+int particao_ativa;
 
 typedef struct superbloco{
   unsigned char id[4];
@@ -42,6 +42,13 @@ typedef struct superbloco{
 typedef struct particao{
   int posicao_inicio;
   int posicao_fim;
+  int posicao_area_inodes;
+  int posicao_area_dados;
+  int blocos_para_bitmap_dados;
+  int blocos_para_bitmap_inodes;
+  int area_inode_em_blocos;
+  int blocos_disco;
+  int tamanho_bloco_em_setores;
 } Particao;
 
 
@@ -59,8 +66,8 @@ SuperBloco super_bloco_atual;
 
 int retornaSetorDoSuperBloco(int numero_particao);
 int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco);
-void leSetorEPreencheStructSuperBloco(SuperBloco *super_bloco, int numero_particao);
-void le_MBR_Preenche_Dados_Particoes();
+void carregaDadosParticao(SuperBloco *super_bloco, int numero_particao);
+void carregaDadosDisco();
 int formatarParticao(int numero_particao, int setores_por_bloco);
 int leitura_arquivo(unsigned char* buffer, int bytes_a_serem_lidos, Handle* handle);
 #endif

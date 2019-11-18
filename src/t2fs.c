@@ -13,7 +13,7 @@
 int inicializada = FALSE;
 
 void inicializar(){
-	le_MBR_Preenche_Dados_Particoes();
+	carregaDadosDisco();
 	inicializada = TRUE;
 }
 
