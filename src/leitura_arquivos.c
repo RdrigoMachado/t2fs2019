@@ -30,7 +30,7 @@ void leitura_direta_bloco(unsigned char* buffer, int setor_inicio_bloco, int byt
 }
 
 int retornaSetorParaLeituraDoBloco(int bloco_a_ser_lido, Handle* handle){
-  int ponteiro = 1;
+  int ponteiro = -1;
   if(bloco_a_ser_lido >= 0){
     if(bloco_a_ser_lido < maior_bloco_caso_1){
       ponteiro = handle->arquivo.dataPtr[bloco_a_ser_lido];
