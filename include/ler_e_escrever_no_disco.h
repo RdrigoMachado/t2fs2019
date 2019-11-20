@@ -55,11 +55,14 @@ typedef struct particao{
 typedef struct handle{
 	struct t2fs_inode arquivo;
 	int posicao_atual;
+	FILE2 identificador;
 }Handle;
 
 
 
 Handle arquivos[MAXIMO_ARQUIVOS_ABERTOS];
+int arquivos_abertos;
+int ultimo_id_utilizado;
 
 Particao particoes[4];
 SuperBloco super_bloco_atual;

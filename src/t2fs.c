@@ -10,7 +10,10 @@
 #include <stdlib.h>
 
 
+struct t2fs_inode* diretorio;
+
 int inicializada = FALSE;
+
 
 void inicializar(){
 	carregaDadosDisco();
@@ -64,6 +67,72 @@ Função:	Função usada para criar um novo arquivo no disco e abrí-lo,
 FILE2 create2 (char *filename) {
 	if(inicializada == FALSE)
 		inicializar();
+
+/*-----------------------------------------------------------------
+    verifica Open
+
+*/
+		int inode_novo_arquivo;
+		int setor_dados_novo_arquivo;
+		int setor_diretorio;
+		int nova_quant_blocos;
+
+
+		if arquivos
+		if (diretorio == NULL){
+            return -1;
+		}
+
+		openBitmap2(retornaSetorDoSuperBloco(particao_ativa));
+		inode_novo_arquivo = searchBitmap2 (BITMAP_INODE, 0);
+		if (inode_novo_arquivo <= 0) {
+            return -1;
+		}
+
+
+         nova_quant_blocos = (diretorio->bytesFileSize + sizeof(t2fs_record)) / bytes_bloco;
+            if ((diretorio->bytesFileSize + sizeof(t2fs_record)) % bytes_bloco){
+              nova_quant_blocos++;
+            }
+            if (nova_quant_blocos > diretorio->blocksFileSize){
+               if( searchBitmap2 (BITMAP_DADOS, 0) < 0){
+                return -1;
+               }
+            }
+
+
+
+         setBitmap2(BITMAP_INODE, setor_inode_novo_arquivo, 1);
+         struct t2fs_inode novo_inode;
+         novo_inode.blocksFileSize=0;
+         novo_inode.bytesFileSize=0;
+         novo_inode.dataPtr[0] = -1;
+         novo_inode.dataPtr[1] = -1;
+         novo_inode.singleIndPtr = -1;
+         novo_inode.doubleIndPtr = -1;
+         novo_inode.RefCounter = 1;
+
+
+};
+
+
+
+         /*
+         salva inode
+         preencher entry
+         salva entrada no diretorio
+         open
+
+
+         */
+
+
+
+
+
+		closeBitmap2();
+
+/*-------------------------------------------------------------------*/
 	return -1;
 }
 
