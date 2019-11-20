@@ -5,7 +5,7 @@
 #include "../include/string.h"
 #include "../include/ler_e_escrever_no_disco.h"
 #include "../include/bitmap2.h"
-
+#include "../include/t2disk.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -73,12 +73,9 @@ FILE2 create2 (char *filename) {
 
 */
 		int inode_novo_arquivo;
-		int setor_dados_novo_arquivo;
-		int setor_diretorio;
 		int nova_quant_blocos;
 
 
-		if arquivos
 		if (diretorio == NULL){
             return -1;
 		}
@@ -90,32 +87,25 @@ FILE2 create2 (char *filename) {
 		}
 
 
-         nova_quant_blocos = (diretorio->bytesFileSize + sizeof(t2fs_record)) / bytes_bloco;
-            if ((diretorio->bytesFileSize + sizeof(t2fs_record)) % bytes_bloco){
-              nova_quant_blocos++;
-            }
-            if (nova_quant_blocos > diretorio->blocksFileSize){
-               if( searchBitmap2 (BITMAP_DADOS, 0) < 0){
-                return -1;
-               }
-            }
+   	nova_quant_blocos = (diretorio->bytesFileSize + sizeof(struct t2fs_record)) / bytes_bloco;
+		if ((diretorio->bytesFileSize + sizeof(struct t2fs_record)) % bytes_bloco){
+			nova_quant_blocos++;
+		}
+		if (nova_quant_blocos > diretorio->blocksFileSize){
+			if( searchBitmap2 (BITMAP_DADOS, 0) < 0){
+				return -1;
+			}
+		}
 
-
-
-         setBitmap2(BITMAP_INODE, setor_inode_novo_arquivo, 1);
-         struct t2fs_inode novo_inode;
-         novo_inode.blocksFileSize=0;
-         novo_inode.bytesFileSize=0;
-         novo_inode.dataPtr[0] = -1;
-         novo_inode.dataPtr[1] = -1;
-         novo_inode.singleIndPtr = -1;
-         novo_inode.doubleIndPtr = -1;
-         novo_inode.RefCounter = 1;
-
-
-};
-
-
+		setBitmap2(BITMAP_INODE, inode_novo_arquivo, 1);
+		struct t2fs_inode novo_inode;
+		novo_inode.blocksFileSize=0;
+		novo_inode.bytesFileSize=0;
+		novo_inode.dataPtr[0] = -1;
+		novo_inode.dataPtr[1] = -1;
+		novo_inode.singleIndPtr = -1;
+		novo_inode.doubleIndPtr = -1;
+		novo_inode.RefCounter = 1;
 
          /*
          salva inode
@@ -125,12 +115,6 @@ FILE2 create2 (char *filename) {
 
 
          */
-
-
-
-
-
-		closeBitmap2();
 
 /*-------------------------------------------------------------------*/
 	return -1;
