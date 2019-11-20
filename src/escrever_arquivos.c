@@ -194,40 +194,82 @@ int escrita_arquivo(unsigned char* buffer, int bytes_a_serem_escritos, Handle* h
 // }
 
 
+//========================================================
+
+int devolve_setor_de_escrita_inode(int numero_inode){
+  int inodes_por_setor         = tamanho_setor / sizeof(struct t2fs_inode);
+  int setor_a_ser_escrito      = (numero_inode / inodes_por_setor) + particoes[particao_ativa].posicao_area_inodes;
+  printf("Posicao area inodes: %d\n",particoes[particao_ativa].posicao_area_inodes );
+  printf("Setor a ser escrito: %d\n",setor_a_ser_escrito );
+
+  return setor_a_ser_escrito;
+}
+
+int devolve_deslocamento_em_bytes(int numero_inode){
+  int inode_size               = sizeof(struct t2fs_inode);
+  int inodes_por_setor         = tamanho_setor / inode_size;
+  int deslocamento_em_bytes    = (numero_inode % inodes_por_setor) * inode_size;
+  return deslocamento_em_bytes;
+}
+
+int escrever_inode(struct t2fs_inode* inode, int numero_inode){
+  unsigned char setor[tamanho_setor];
+  int tamanho_inode = sizeof(struct t2fs_inode);
+  int numero_setor  = devolve_setor_de_escrita_inode(numero_inode);
+  int deslocamento  = devolve_deslocamento_em_bytes(numero_inode);
+
+  if (read_sector(numero_setor, setor) == 0){
+    copiarMemoria((char*) &setor[deslocamento], (char*) &inode, tamanho_inode);
+    if(write_sector(numero_setor, setor) == 0){
+        return SUCESSO;
+    }
+  }
+  return FALHA;
+}
+
+//==============================================================//
+
+
 
 int main(){
 
   carregaDadosDisco();
-  int index = 0;
-   for(index =0; index<4 ; index++){
-   formatarParticao(index, 4);
+   int index = 0;
+  //  for(index =0; index<4 ; index++){
+  //   formatarParticao(index, 4);
+  //   carregaDadosParticao(&super_bloco_atual, index);
+  //   printf("Inicio %d: %d\n",index, particoes[index].posicao_inicio );
+  //   printf("Fim %d: %d\n",index, particoes[index].posicao_fim );
+  //   printf("Bloco inicio inodes: %d\n", particoes[index].posicao_area_inodes );
+  //   printf("Bloco inicio dados: %d\n", particoes[index].posicao_area_dados );
+  //   printf("Area Inode: %d \n\n\n\n",super_bloco_atual.inodeAreaSize );
+  // }
 
-    carregaDadosParticao(&super_bloco_atual, index);
-    printf("Inicio %d: %d\n",index, particoes[index].posicao_inicio );
-    printf("Fim %d: %d\n",index, particoes[index].posicao_fim );
-    printf("Bloco inicio inodes: %d\n", particoes[index].posicao_area_inodes );
-    printf("Bloco inicio dados: %d\n", particoes[index].posicao_area_dados );
-    printf("Area Inode: %d \n\n\n\n",super_bloco_atual.inodeAreaSize );
-  }
   carregaDadosParticao(&super_bloco_atual, index);
+  int numero_inode = 37;
+  int numero_setor  = devolve_setor_de_escrita_inode(numero_inode);
+  int deslocamento  = devolve_deslocamento_em_bytes(numero_inode);
+
+  printf("Setor escrita: %d - byte deslocamento: %d\n", numero_setor, deslocamento);
 
 
-
-  Handle handle;
-  handle.posicao_atual          = 0;
-  handle.arquivo.blocksFileSize = 0;
-  handle.arquivo.bytesFileSize  = 0;
-  handle.arquivo.dataPtr[0]     = -1;
-  handle.arquivo.dataPtr[1]     = -1;
-  handle.arquivo.singleIndPtr   = -1;
-  handle.arquivo.doubleIndPtr   = -1;
-  handle.arquivo.RefCounter     = 0;
-
-
-  char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
-  struct t2fs_record novo;
-  novo.TypeVal = TYPEVAL_REGULAR;
-  copiarMemoria(novo.name, nome, 9);
+  //
+  //
+  // Handle handle;
+  // handle.posicao_atual          = 0;
+  // handle.arquivo.blocksFileSize = 0;
+  // handle.arquivo.bytesFileSize  = 0;
+  // handle.arquivo.dataPtr[0]     = -1;
+  // handle.arquivo.dataPtr[1]     = -1;
+  // handle.arquivo.singleIndPtr   = -1;
+  // handle.arquivo.doubleIndPtr   = -1;
+  // handle.arquivo.RefCounter     = 0;
+  //
+  //
+  // char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
+  // struct t2fs_record novo;
+  // novo.TypeVal = TYPEVAL_REGULAR;
+  // copiarMemoria(novo.name, nome, 9);
   // for(index = 0; index < 4200; index++){
   //
   //   if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){

@@ -55,8 +55,9 @@ void init(int numero_particao){
     particoes[numero_particao].blocos_para_bitmap_dados++;
   }
   areaDadosEmBlocos                        = (int) areaDadosEmBlocos - particoes[numero_particao].blocos_para_bitmap_dados;
-
-  particoes[numero_particao].posicao_area_inodes = particoes[numero_particao].posicao_inicio + blocosParaSuperBloco + particoes[numero_particao].blocos_para_bitmap_inodes + particoes[numero_particao].blocos_para_bitmap_dados;
+  printf("Posicao inicio: %d  - \n", particoes[numero_particao].posicao_inicio);
+  int setores_base = (blocosParaSuperBloco + particoes[numero_particao].blocos_para_bitmap_inodes + particoes[numero_particao].blocos_para_bitmap_dados) *particoes[numero_particao].tamanho_bloco_em_setores;
+  particoes[numero_particao].posicao_area_inodes = particoes[numero_particao].posicao_inicio + setores_base;
   particoes[numero_particao].posicao_area_dados  = particoes[numero_particao].posicao_area_inodes + areaInodeEmBlocos;
   particoes[numero_particao].area_inode_em_blocos= areaInodeEmBlocos;
 }
@@ -110,7 +111,7 @@ int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco){
   copiarMemoria((char*) &bloco[14], (char*) ponteiroAuxiliar, 2);
   unsigned char a[2];
   copiarMemoria((char*) a, (char*) &bloco[14], 2);
-  
+
   ponteiroAuxiliar = (unsigned char*) &particoes[numero_particao].blocos_disco;
   copiarMemoria((char*) &bloco[16], (char*) ponteiroAuxiliar, 4);
 
