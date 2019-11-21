@@ -25,7 +25,6 @@ int retornaBlocoLivreEMarcaBimapComoUsado(){
       return particoes[particao_ativa].posicao_area_dados + (numero_bloco * particoes[particao_ativa].tamanho_bloco_em_setores);
 }
 
-
 int bitmap_dados_size(){
   int outros_blocos = particoes[particao_ativa].blocos_para_bitmap_dados;
   outros_blocos    += particoes[particao_ativa].blocos_para_bitmap_inodes;
@@ -34,6 +33,7 @@ int bitmap_dados_size(){
   int blocos_dados = particoes[particao_ativa].blocos_disco - (outros_blocos);
   return blocos_dados;
 }
+
 void print_bitmap_livre(){
   int blocos_livres = 0;
   int index;
@@ -45,7 +45,6 @@ void print_bitmap_livre(){
   }
   printf("Blocos livres: %d\n", blocos_livres);
 }
-
 
 int tem_blocos_livres_suficientes(int blocos_necessarios){
 
@@ -64,6 +63,7 @@ int tem_blocos_livres_suficientes(int blocos_necessarios){
   return FALSE;
 
 }
+
 int blocos_necessarios_para_escrita(Handle* handle, int bytes_a_serem_escritos){
   int total_bytes          = (handle->arquivo.bytesFileSize + bytes_a_serem_escritos);
   int setores_necessarios  = total_bytes / tamanho_setor;
@@ -303,12 +303,13 @@ int main(){
   char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
   struct t2fs_record novo;
   novo.TypeVal = TYPEVAL_REGULAR;
-  copiarMemoria(novo.name, nome, 9);
+
   for(index = 0; index < 18000; index++){
+
+    copiarMemoria((char*) novo.name, (char*) &index, 4);
 
     if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){
           printf("Erro\n");
-          return 0;
     } else {
       printf("===============================================================\n");
      printf("pointer0 %d - ponter1 %d - pointerSingle %d - pointerDoubl %d\n", handle.arquivo.dataPtr[0],handle.arquivo.dataPtr[1],handle.arquivo.singleIndPtr, handle.arquivo.doubleIndPtr );
@@ -318,17 +319,20 @@ int main(){
 
     }
   }
-  // handle.posicao_atual = 0;
-  // printf("Leitura\n" );
-  // for(index = 0; index < 4136; index++){
-  //   struct t2fs_record novo;
-  //   if(leitura_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
-  //     printf("Erro\n");
-  //   else{
-  //     printf("===============================================================\n");
-  //     printf("nome  %s \n", novo.name );
-  //     printf("Size %d\n", handle.posicao_atual);
-  //   }
-  // }
+  handle.posicao_atual = 0;
+  printf("Leitura\n" );
+  for(index = 0; index < 4136; index++){
+    struct t2fs_record novo;
+    if(leitura_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
+      printf("Erro\n");
+    else{
+      printf("===============================================================\n");
+      int numero;
+      copiarMemoria((char*) &numero, (char*) novo.name, 4);
+
+      printf("nome  %d \n", numero );
+      printf("Size %d\n", handle.posicao_atual);
+    }
+  }
   return 0;
 }
