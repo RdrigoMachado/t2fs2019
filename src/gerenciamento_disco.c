@@ -57,7 +57,7 @@ void init(int numero_particao){
   areaDadosEmBlocos                        = (int) areaDadosEmBlocos - particoes[numero_particao].blocos_para_bitmap_dados;
   int setores_base = (blocosParaSuperBloco + particoes[numero_particao].blocos_para_bitmap_inodes + particoes[numero_particao].blocos_para_bitmap_dados) *particoes[numero_particao].tamanho_bloco_em_setores;
   particoes[numero_particao].posicao_area_inodes = particoes[numero_particao].posicao_inicio + setores_base;
-  particoes[numero_particao].posicao_area_dados  = particoes[numero_particao].posicao_area_inodes + areaInodeEmBlocos;
+  particoes[numero_particao].posicao_area_dados  = particoes[numero_particao].posicao_area_inodes + (areaInodeEmBlocos * particoes[numero_particao].tamanho_bloco_em_setores) ;
   particoes[numero_particao].area_inode_em_blocos= areaInodeEmBlocos;
 }
 

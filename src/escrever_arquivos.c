@@ -29,9 +29,6 @@ int bitmap_dados_size(){
   outros_blocos    += particoes[particao_ativa].area_inode_em_blocos;
   outros_blocos++;
   int blocos_dados = particoes[particao_ativa].blocos_disco - (outros_blocos);
-  printf("blocos totais: %d - blcos bit dado %d - blocos bit inode %d - inode %d\n",
-  particoes[particao_ativa].blocos_disco, particoes[particao_ativa].blocos_para_bitmap_dados,
-  particoes[particao_ativa].blocos_para_bitmap_inodes,particoes[particao_ativa].area_inode_em_blocos);
   return blocos_dados;
 }
 void print_bitmap_livre(){
@@ -83,7 +80,10 @@ void escrever_bytes_buffer_para_setor(unsigned char* buffer, int numero_setor, i
   unsigned char setor[tamanho_setor];
   read_sector(numero_setor, setor);
   int contador_bytes = deslocamento;
-
+  if(numero_setor <= particoes[particao_ativa].posicao_inicio){
+    printf("Area invalida\n");
+    return;
+  }
   while(contador_bytes < tamanho_setor && *bytes_escritos < bytes_a_serem_escritos){
     setor[contador_bytes] = buffer[*bytes_escritos];
     contador_bytes++;
@@ -163,48 +163,35 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
                     contador_indirecao++;
         }
 
+        int ponteiro_ind_dupla   = bloco / ponteiros_por_bloco;
+        int setor_ind_dupla      = ponteiro_ind_dupla / ponteiros_por_setor;
+        int deslocamento_bytes   = (ponteiro_ind_dupla % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
+        read_sector(setor_ind_dupla, buffer);
 
-        int ponteiro_ind_dupla   = bloco / (ponteiros_por_bloco * ponteiros_por_bloco);
-        int ponteiro_ind_simples = bloco % (ponteiros_por_bloco);
-
-
-
-
-
-        int deslocamento_bloco_ind_duplo = (bloco/ponteiros_por_bloco) / ponteiros_por_setor;
-        int setor_bloco_indireto_duplo = handle->arquivo.doubleIndPtr + deslocamento_bloco_ind_duplo;
-
-        read_sector(setor_bloco_indireto_duplo, buffer);
-
-        int deslocamento_setor_ind_duplo = (bloco/ponteiros_por_bloco) % ponteiros_por_setor;
-        int posicao_escrita_setor = deslocamento_setor_ind_duplo * PONTEIRO_EM_BYTES;
-        if(bloco_a_ser_escrito == handle->arquivo.blocksFileSize){
-
+        int ultimo_ponteiro_ind_dupla =  (handle->arquivo.blocksFileSize - maior_bloco_caso_2) / ponteiros_por_bloco;
+        if(ponteiro_ind_dupla > ultimo_ponteiro_ind_dupla){
           ponteiro_simples = retornaBlocoLivreEMarcaBimapComoUsado();
-          contador_indirecao++;
-          copiarMemoria((char*) &buffer[posicao_escrita_setor], (char*) &ponteiro_simples, PONTEIRO_EM_BYTES);
-          printf("------\n" );
-          write_sector(setor_bloco_indireto_duplo, buffer);
+          copiarMemoria((char*) &buffer[deslocamento_bytes], (char*) &ponteiro_simples, PONTEIRO_EM_BYTES);
+          write_sector(setor_ind_dupla, buffer);
         }
         else{
-          copiarMemoria((char*) &ponteiro_simples, (char*) &buffer[posicao_escrita_setor], PONTEIRO_EM_BYTES);
+          copiarMemoria((char*) &ponteiro_simples, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
         }
 
-        int setor_a_ser_escrito = (bloco / ponteiros_por_bloco) / ponteiros_por_setor;
+        int ponteiro_ind_simples = bloco % ponteiros_por_bloco;
+        int setor_ind_simples    = ponteiro_ind_simples / ponteiros_por_setor;
+        deslocamento_bytes       = (ponteiro_ind_simples % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
+        read_sector(setor_ind_simples, buffer);
 
-        int setor_bloco_indireto_simples = ponteiro_simples + deslocamento_bloco_ind_simples;
-
-        read_sector(setor_bloco_indireto_simples, buffer);
-        int deslocamento_setor_ind_simples = (bloco % ponteiros_por_bloco) % ponteiros_por_setor;
-        posicao_escrita_setor = deslocamento_setor_ind_simples * PONTEIRO_EM_BYTES;
-        if(bloco_a_ser_escrito == handle->arquivo.blocksFileSize){
+        int ultimo_ponteiro_ind_simples = (handle->arquivo.blocksFileSize - maior_bloco_caso_2) % ponteiros_por_bloco;
+        if(ponteiro_ind_simples > ultimo_ponteiro_ind_simples){
           ponteiro_dado = retornaBlocoLivreEMarcaBimapComoUsado();
           handle->arquivo.blocksFileSize++;
-          copiarMemoria((char*) &buffer[posicao_escrita_setor], (char*) &ponteiro_dado, PONTEIRO_EM_BYTES);
-          write_sector(setor_bloco_indireto_simples, buffer);
+          copiarMemoria((char*) &buffer[deslocamento_bytes], (char*) &ponteiro_dado, PONTEIRO_EM_BYTES);
+          write_sector(setor_ind_simples, buffer);
         }
-        else{
-          copiarMemoria((char*) &ponteiro_dado, (char*) &buffer[posicao_escrita_setor], PONTEIRO_EM_BYTES);
+        else {
+          copiarMemoria((char*) &ponteiro_dado, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
         }
         ponteiro = ponteiro_dado;
       }
@@ -216,7 +203,6 @@ int escrita_arquivo(unsigned char* buffer, int bytes_a_serem_escritos, Handle* h
   int bytes_escritos = 0;
   int bloco_a_ser_escrito = handle->posicao_atual / bytes_bloco;
   int blocos_necessarios = blocos_necessarios_para_escrita(handle, bytes_a_serem_escritos) - handle->arquivo.blocksFileSize ;
-  int teste = tem_blocos_livres_suficientes(blocos_necessarios);
   if(tem_blocos_livres_suficientes(blocos_necessarios) == FALSE){
     printf("Falha: blocos necessarios: %d - blocos usados: %d\n",blocos_necessarios, handle->arquivo.blocksFileSize );
     return FALHA;
@@ -271,7 +257,7 @@ int main(){
   struct t2fs_record novo;
   novo.TypeVal = TYPEVAL_REGULAR;
   copiarMemoria(novo.name, nome, 9);
-  for(index = 0; index < 4128; index++){
+  for(index = 0; index < 4200; index++){
 
     if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){
           printf("Erro\n");
