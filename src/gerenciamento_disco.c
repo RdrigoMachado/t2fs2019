@@ -6,12 +6,9 @@ int retornaSetorDoSuperBloco(int numero_particao){
 
 void carregaDadosDisco(){
   unsigned char buffer[256] ;
-  unsigned char tam_setor[2] ;
 
   read_sector(0, buffer);
-  copiarMemoria((char*) tam_setor,        (char*)  &buffer[2] , 2);
-  tamanho_setor = converteDoisBytesParaInt(tam_setor);
-
+  tamanho_setor = 256;
   int index;
   for (index = 0; index < 4; index++){
     Particao particao;
@@ -29,9 +26,9 @@ void init(int numero_particao){
   maior_bloco_caso_3  = ((bytes_bloco/particoes[numero_particao].tamanho_bloco_em_setores) * (bytes_bloco/particoes[numero_particao].tamanho_bloco_em_setores)) + maior_bloco_caso_2;
   ponteiros_por_bloco = bytes_bloco / PONTEIRO_EM_BYTES;
 
-  int tamanhoSetor            = tamanho_setor;
   int blocosParaSuperBloco    = 1;
-  int bitsPorSetor            = tamanhoSetor * 8;
+  int bitsPorSetor            = tamanho_setor * 8;
+
   int bitsPorBloco            = particoes[numero_particao].tamanho_bloco_em_setores * bitsPorSetor;
 
   int tamanhoParticaoEmSetores  = particoes[numero_particao].posicao_fim - particoes[numero_particao].posicao_inicio;
@@ -40,13 +37,11 @@ void init(int numero_particao){
   int areaInodeEmBlocos         = (numeroBlocosNaParticao / 10);
   if(numeroBlocosNaParticao % 10 > 0)
     areaInodeEmBlocos++;
-
   // numero de blocos necessarios para o bit map do inode
   particoes[numero_particao].blocos_para_bitmap_inodes     = areaInodeEmBlocos / bitsPorBloco;
   if (areaInodeEmBlocos % bitsPorBloco > 0){
     particoes[numero_particao].blocos_para_bitmap_inodes++;
   }
-
   // numero de blocos designados para área de dados
   int areaDadosEmBlocos          = numeroBlocosNaParticao - (blocosParaSuperBloco + particoes[numero_particao].blocos_para_bitmap_inodes + areaInodeEmBlocos);
   // numero de blocos designados para área do bitmap de dados
