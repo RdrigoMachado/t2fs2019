@@ -3,7 +3,7 @@
 */
 #include "../include/apidisk.h"
 #include "../include/string.h"
-#include "../include/ler_e_escrever_no_disco.h"
+#include "../include/gerenciamento_disco.h"
 #include "../include/bitmap2.h"
 #include "../include/t2disk.h"
 #include <stdio.h>

@@ -1,16 +1,14 @@
 #include "../include/escrever_arquivos.h"
+int contador_indirecao = 0;
 
 //negativo em caso de erro, posicao em caso de sucesso
 int retornaPosicaoLivreDeDadosEMarcaComoUsada(){
-  int	posicao = -1;
+  int	posicao = FALHA;
   if(openBitmap2(retornaSetorDoSuperBloco(particao_ativa)) == 0){
     posicao = searchBitmap2 (BITMAP_DADOS, 0);
     if(posicao >=0 ){
       setBitmap2 (BITMAP_DADOS, posicao, 1);
     }
-  }
-  else{
-    printf("Erro bitmap\n");
   }
   return posicao;
 }
@@ -18,7 +16,67 @@ int retornaPosicaoLivreDeDadosEMarcaComoUsada(){
 //retorna endereço para o setor do inicio do bloco livre
 int retornaBlocoLivreEMarcaBimapComoUsado(){
     int numero_bloco = retornaPosicaoLivreDeDadosEMarcaComoUsada();
-    return particoes[particao_ativa].posicao_area_dados + (numero_bloco * particoes[particao_ativa].tamanho_bloco_em_setores);
+    if(numero_bloco < 0)
+      return FALHA;
+    else
+      return particoes[particao_ativa].posicao_area_dados + (numero_bloco * particoes[particao_ativa].tamanho_bloco_em_setores);
+}
+
+
+int bitmap_dados_size(){
+  int outros_blocos = particoes[particao_ativa].blocos_para_bitmap_dados;
+  outros_blocos    += particoes[particao_ativa].blocos_para_bitmap_inodes;
+  outros_blocos    += particoes[particao_ativa].area_inode_em_blocos;
+  outros_blocos++;
+  int blocos_dados = particoes[particao_ativa].blocos_disco - (outros_blocos);
+  printf("blocos totais: %d - blcos bit dado %d - blocos bit inode %d - inode %d\n",
+  particoes[particao_ativa].blocos_disco, particoes[particao_ativa].blocos_para_bitmap_dados,
+  particoes[particao_ativa].blocos_para_bitmap_inodes,particoes[particao_ativa].area_inode_em_blocos);
+  return blocos_dados;
+}
+void print_bitmap_livre(){
+  int blocos_livres = 0;
+  int index;
+  int limite = bitmap_dados_size();
+  for(index = 0; index< limite; index++){
+    if(getBitmap2(BITMAP_DADOS, index) == 0){
+      blocos_livres++;
+    }
+  }
+  printf("Blocos livres: %d\n", blocos_livres);
+}
+
+
+int tem_blocos_livres_suficientes(int blocos_necessarios){
+
+  int blocos_livres = 0;
+  int index;
+  int limite = bitmap_dados_size();
+  for(index = 0; index< limite; index++){
+    if(getBitmap2(BITMAP_DADOS, index) == 0){
+      blocos_livres++;
+    }
+  }
+  printf("blocos necessarios: %d - blocos livres: %d\n", blocos_necessarios, blocos_livres );
+  if(blocos_necessarios <= blocos_livres) {
+    return TRUE;
+  }
+  return FALSE;
+
+}
+int blocos_necessarios_para_escrita(Handle* handle, int bytes_a_serem_escritos){
+  int total_bytes          = (handle->arquivo.bytesFileSize + bytes_a_serem_escritos);
+  int setores_necessarios  = total_bytes / tamanho_setor;
+  if(total_bytes % tamanho_setor > 0){
+    setores_necessarios++;
+  }
+
+  int blocos_necessarios   = setores_necessarios / particoes[particao_ativa].tamanho_bloco_em_setores;
+  if(setores_necessarios % particoes[particao_ativa].tamanho_bloco_em_setores > 0){
+    blocos_necessarios++;
+  }
+
+  return blocos_necessarios;
 }
 
 void escrever_bytes_buffer_para_setor(unsigned char* buffer, int numero_setor, int bytes_a_serem_escritos, int* bytes_escritos, int deslocamento){
@@ -60,7 +118,6 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
   if(bloco_a_ser_escrito >= 0){
     if(bloco_a_ser_escrito < maior_bloco_caso_1){
       if(handle->arquivo.dataPtr[bloco_a_ser_escrito] == -1){
-        printf("novo ponteiro direto \n");
         ponteiro = retornaBlocoLivreEMarcaBimapComoUsado();
         handle->arquivo.dataPtr[bloco_a_ser_escrito] = ponteiro;
         handle->arquivo.blocksFileSize++;
@@ -68,7 +125,6 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
       else {
         ponteiro = handle->arquivo.dataPtr[bloco_a_ser_escrito];
       }
-      printf("direto %d\n",  ponteiro);
     }
     else if(bloco_a_ser_escrito < maior_bloco_caso_2){
         int ponteiros_por_setor = (ponteiros_por_bloco / particoes[particao_ativa].tamanho_bloco_em_setores);
@@ -76,13 +132,13 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
         int ponteiro_dado;
         if (handle->arquivo.singleIndPtr == -1) {
           handle->arquivo.singleIndPtr = retornaBlocoLivreEMarcaBimapComoUsado();
+          contador_indirecao++;
         }
         int deslocamento_bloco_ind_simples = (bloco % ponteiros_por_bloco) / ponteiros_por_setor;
         int setor_bloco_indireto_simples = handle->arquivo.singleIndPtr + deslocamento_bloco_ind_simples;
         read_sector(setor_bloco_indireto_simples, buffer);
 
         int deslocamento_setor_ind_simples = (bloco % ponteiros_por_bloco) % ponteiros_por_setor;
-        printf("bloco %d  - deslocamento %d \n", bloco, deslocamento_setor_ind_simples );
         int posicao_escrita_setor = deslocamento_setor_ind_simples * PONTEIRO_EM_BYTES;
 
         if(bloco_a_ser_escrito == handle->arquivo.blocksFileSize){
@@ -95,7 +151,6 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
           copiarMemoria((char*) &ponteiro_dado, (char*) &buffer[posicao_escrita_setor], PONTEIRO_EM_BYTES);
         }
         ponteiro = ponteiro_dado;
-        printf("Single Ponteiro> %d\n", ponteiro);
         //ate aqui parece ok
     }
     else if(bloco_a_ser_escrito < maior_bloco_caso_3){
@@ -105,10 +160,20 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
         int bloco               = bloco_a_ser_escrito - maior_bloco_caso_2;
         if(handle->arquivo.doubleIndPtr == -1){
           handle->arquivo.doubleIndPtr = retornaBlocoLivreEMarcaBimapComoUsado();
-          printf("atualizei o ponteiro duplo para %d\n", handle->arquivo.doubleIndPtr );
+                    contador_indirecao++;
         }
+
+
+        int ponteiro_ind_dupla   = bloco / (ponteiros_por_bloco * ponteiros_por_bloco);
+        int ponteiro_ind_simples = bloco % (ponteiros_por_bloco);
+
+
+
+
+
         int deslocamento_bloco_ind_duplo = (bloco/ponteiros_por_bloco) / ponteiros_por_setor;
         int setor_bloco_indireto_duplo = handle->arquivo.doubleIndPtr + deslocamento_bloco_ind_duplo;
+
         read_sector(setor_bloco_indireto_duplo, buffer);
 
         int deslocamento_setor_ind_duplo = (bloco/ponteiros_por_bloco) % ponteiros_por_setor;
@@ -116,8 +181,7 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
         if(bloco_a_ser_escrito == handle->arquivo.blocksFileSize){
 
           ponteiro_simples = retornaBlocoLivreEMarcaBimapComoUsado();
-
-          printf("ponteiro simples %d \n", ponteiro_simples );
+          contador_indirecao++;
           copiarMemoria((char*) &buffer[posicao_escrita_setor], (char*) &ponteiro_simples, PONTEIRO_EM_BYTES);
           printf("------\n" );
           write_sector(setor_bloco_indireto_duplo, buffer);
@@ -125,8 +189,11 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
         else{
           copiarMemoria((char*) &ponteiro_simples, (char*) &buffer[posicao_escrita_setor], PONTEIRO_EM_BYTES);
         }
-        int deslocamento_bloco_ind_simples = (bloco % ponteiros_por_bloco) / ponteiros_por_setor;
+
+        int setor_a_ser_escrito = (bloco / ponteiros_por_bloco) / ponteiros_por_setor;
+
         int setor_bloco_indireto_simples = ponteiro_simples + deslocamento_bloco_ind_simples;
+
         read_sector(setor_bloco_indireto_simples, buffer);
         int deslocamento_setor_ind_simples = (bloco % ponteiros_por_bloco) % ponteiros_por_setor;
         posicao_escrita_setor = deslocamento_setor_ind_simples * PONTEIRO_EM_BYTES;
@@ -145,22 +212,20 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
   return ponteiro;
 }
 
-int escrita_arquivo(unsigned char* buffer, int bytes_a_serem_escritos, Handle* handle){
-
+int escrita_arquivo(unsigned char* buffer, int bytes_a_serem_escritos, Handle* handle) {
   int bytes_escritos = 0;
   int bloco_a_ser_escrito = handle->posicao_atual / bytes_bloco;
-  printf("bytes bloco: %d \n", bytes_bloco);
-  if(particoes[particao_ativa].posicao_inicio + (handle->posicao_atual+bytes_a_serem_escritos)/256 > particoes[particao_ativa].posicao_fim ){
+  int blocos_necessarios = blocos_necessarios_para_escrita(handle, bytes_a_serem_escritos) - handle->arquivo.blocksFileSize ;
+  int teste = tem_blocos_livres_suficientes(blocos_necessarios);
+  if(tem_blocos_livres_suficientes(blocos_necessarios) == FALSE){
+    printf("Falha: blocos necessarios: %d - blocos usados: %d\n",blocos_necessarios, handle->arquivo.blocksFileSize );
     return FALHA;
   }
   int inicio_bloco;
   int deslocameto_ativado = TRUE;
 
-
   while(bytes_escritos < bytes_a_serem_escritos){
-
     inicio_bloco = retornaSetorParaEscritaDoBloco(bloco_a_ser_escrito, bytes_escritos, handle);
-    printf("inicio_bloco %d\n", inicio_bloco);
     if(inicio_bloco == -1){
       return FALHA;
     }
@@ -172,114 +237,54 @@ int escrita_arquivo(unsigned char* buffer, int bytes_a_serem_escritos, Handle* h
   handle->arquivo.bytesFileSize += bytes_escritos;
   return SUCESSO;
 }
-//
-// int main(){
-//   le_MBR_Preenche_Dados_Particoes();
-//   formatarParticao(1, 4);
-//
-//   leSetorEPreencheStructSuperBloco(&super_bloco_atual, 1);
-//
-//   int bloco = retornaBlocoLivreEMarcaBimapComoUsado();
-//   printf("Blcoo livre %d\n",bloco );
-//   bloco = retornaBlocoLivreEMarcaBimapComoUsado();
-//   printf("Blcoo livre %d\n",bloco );
-//   bloco = retornaBlocoLivreEMarcaBimapComoUsado();
-//   printf("Blcoo livre %d\n",bloco );
-//   bloco = retornaBlocoLivreEMarcaBimapComoUsado();
-//   printf("Blcoo livre %d\n",bloco );
-//   bloco = retornaBlocoLivreEMarcaBimapComoUsado();
-//   printf("Blcoo livre %d\n",bloco );
-//
-//   return 0;
-// }
-
-
-//========================================================
-
-int devolve_setor_de_escrita_inode(int numero_inode){
-  int inodes_por_setor         = tamanho_setor / sizeof(struct t2fs_inode);
-  int setor_a_ser_escrito      = (numero_inode / inodes_por_setor) + particoes[particao_ativa].posicao_area_inodes;
-  printf("Posicao area inodes: %d\n",particoes[particao_ativa].posicao_area_inodes );
-  printf("Setor a ser escrito: %d\n",setor_a_ser_escrito );
-
-  return setor_a_ser_escrito;
-}
-
-int devolve_deslocamento_em_bytes(int numero_inode){
-  int inode_size               = sizeof(struct t2fs_inode);
-  int inodes_por_setor         = tamanho_setor / inode_size;
-  int deslocamento_em_bytes    = (numero_inode % inodes_por_setor) * inode_size;
-  return deslocamento_em_bytes;
-}
-
-int escrever_inode(struct t2fs_inode* inode, int numero_inode){
-  unsigned char setor[tamanho_setor];
-  int tamanho_inode = sizeof(struct t2fs_inode);
-  int numero_setor  = devolve_setor_de_escrita_inode(numero_inode);
-  int deslocamento  = devolve_deslocamento_em_bytes(numero_inode);
-
-  if (read_sector(numero_setor, setor) == 0){
-    copiarMemoria((char*) &setor[deslocamento], (char*) &inode, tamanho_inode);
-    if(write_sector(numero_setor, setor) == 0){
-        return SUCESSO;
-    }
-  }
-  return FALHA;
-}
-
-//==============================================================//
-
-
 
 int main(){
 
   carregaDadosDisco();
    int index = 0;
-  //  for(index =0; index<4 ; index++){
-  //   formatarParticao(index, 4);
-  //   carregaDadosParticao(&super_bloco_atual, index);
-  //   printf("Inicio %d: %d\n",index, particoes[index].posicao_inicio );
-  //   printf("Fim %d: %d\n",index, particoes[index].posicao_fim );
-  //   printf("Bloco inicio inodes: %d\n", particoes[index].posicao_area_inodes );
-  //   printf("Bloco inicio dados: %d\n", particoes[index].posicao_area_dados );
-  //   printf("Area Inode: %d \n\n\n\n",super_bloco_atual.inodeAreaSize );
-  // }
-
+   for(index =0; index<4 ; index++){
+    formatarParticao(index, 4);
+    carregaDadosParticao(&super_bloco_atual, index);
+    printf("Inicio %d: %d\n",index, particoes[index].posicao_inicio );
+    printf("Fim %d: %d\n",index, particoes[index].posicao_fim );
+    printf("Bloco inicio inodes: %d\n", particoes[index].posicao_area_inodes );
+    printf("Bloco inicio dados: %d\n", particoes[index].posicao_area_dados );
+    printf("Area Inode: %d \n\n\n\n",super_bloco_atual.inodeAreaSize );
+  }
+  index = 0;
   carregaDadosParticao(&super_bloco_atual, index);
-  int numero_inode = 37;
-  int numero_setor  = devolve_setor_de_escrita_inode(numero_inode);
-  int deslocamento  = devolve_deslocamento_em_bytes(numero_inode);
-
-  printf("Setor escrita: %d - byte deslocamento: %d\n", numero_setor, deslocamento);
 
 
-  //
-  //
-  // Handle handle;
-  // handle.posicao_atual          = 0;
-  // handle.arquivo.blocksFileSize = 0;
-  // handle.arquivo.bytesFileSize  = 0;
-  // handle.arquivo.dataPtr[0]     = -1;
-  // handle.arquivo.dataPtr[1]     = -1;
-  // handle.arquivo.singleIndPtr   = -1;
-  // handle.arquivo.doubleIndPtr   = -1;
-  // handle.arquivo.RefCounter     = 0;
-  //
-  //
-  // char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
-  // struct t2fs_record novo;
-  // novo.TypeVal = TYPEVAL_REGULAR;
-  // copiarMemoria(novo.name, nome, 9);
-  // for(index = 0; index < 4200; index++){
-  //
-  //   if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){
-  //         printf("Erro\n");
-  //   } else {
-  //     printf("===============================================================\n");
-  //     printf("pointer0 %d - ponter1 %d - pointerSingle %d - pointerDoubl %d\n", handle.arquivo.dataPtr[0],handle.arquivo.dataPtr[1],handle.arquivo.singleIndPtr, handle.arquivo.doubleIndPtr );
-  //     printf("Size %d\n", handle.arquivo.bytesFileSize);
-  //   }
-  // }
+
+  Handle handle;
+  handle.posicao_atual          = 0;
+  handle.arquivo.blocksFileSize = 0;
+  handle.arquivo.bytesFileSize  = 0;
+  handle.arquivo.dataPtr[0]     = -1;
+  handle.arquivo.dataPtr[1]     = -1;
+  handle.arquivo.singleIndPtr   = -1;
+  handle.arquivo.doubleIndPtr   = -1;
+  handle.arquivo.RefCounter     = 0;
+
+
+  char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
+  struct t2fs_record novo;
+  novo.TypeVal = TYPEVAL_REGULAR;
+  copiarMemoria(novo.name, nome, 9);
+  for(index = 0; index < 4128; index++){
+
+    if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){
+          printf("Erro\n");
+          return 0;
+    } else {
+      printf("===============================================================\n");
+     printf("pointer0 %d - ponter1 %d - pointerSingle %d - pointerDoubl %d\n", handle.arquivo.dataPtr[0],handle.arquivo.dataPtr[1],handle.arquivo.singleIndPtr, handle.arquivo.doubleIndPtr );
+      printf("BLOCOS %d - indirecao %d ", handle.arquivo.blocksFileSize, contador_indirecao);
+      print_bitmap_livre();
+
+
+    }
+  }
   // handle.posicao_atual = 0;
   // printf("Leitura\n" );
   // for(index = 0; index < 4136; index++){
@@ -292,6 +297,5 @@ int main(){
   //     printf("Size %d\n", handle.posicao_atual);
   //   }
   // }
-
   return 0;
 }

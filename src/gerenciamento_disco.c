@@ -1,4 +1,4 @@
-#include "../include/ler_e_escrever_no_disco.h"
+#include "../include/gerenciamento_disco.h"
 
 int retornaSetorDoSuperBloco(int numero_particao){
   return particoes[numero_particao].posicao_inicio;
@@ -55,7 +55,6 @@ void init(int numero_particao){
     particoes[numero_particao].blocos_para_bitmap_dados++;
   }
   areaDadosEmBlocos                        = (int) areaDadosEmBlocos - particoes[numero_particao].blocos_para_bitmap_dados;
-  printf("Posicao inicio: %d  - \n", particoes[numero_particao].posicao_inicio);
   int setores_base = (blocosParaSuperBloco + particoes[numero_particao].blocos_para_bitmap_inodes + particoes[numero_particao].blocos_para_bitmap_dados) *particoes[numero_particao].tamanho_bloco_em_setores;
   particoes[numero_particao].posicao_area_inodes = particoes[numero_particao].posicao_inicio + setores_base;
   particoes[numero_particao].posicao_area_dados  = particoes[numero_particao].posicao_area_inodes + areaInodeEmBlocos;
