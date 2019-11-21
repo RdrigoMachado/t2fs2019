@@ -29,45 +29,82 @@ void leitura_direta_bloco(unsigned char* buffer, int setor_inicio_bloco, int byt
   }
 }
 
+
 int retornaSetorParaLeituraDoBloco(int bloco_a_ser_lido, Handle* handle){
+
   int ponteiro = -1;
   unsigned char buffer[tamanho_setor];
 
   if(bloco_a_ser_lido >= 0){
     if(bloco_a_ser_lido < maior_bloco_caso_1){
+      if(handle->arquivo.dataPtr[bloco_a_ser_lido] == -1){
+        return FALHA;
+      }
       ponteiro = handle->arquivo.dataPtr[bloco_a_ser_lido];
-      printf("Direto %d\n", ponteiro );
+      printf("Dado %d\n", bloco_a_ser_lido);
     }
     else if(bloco_a_ser_lido < maior_bloco_caso_2){
-      int ponteiros_por_setor = (ponteiros_por_bloco / particoes[particao_ativa].tamanho_bloco_em_setores);
-      int bloco = bloco_a_ser_lido - maior_bloco_caso_1;
-      int setor_leitura = handle->arquivo.singleIndPtr + (bloco / ponteiros_por_setor);
-      int deslocamento = (bloco % ponteiros_por_bloco) * PONTEIRO_EM_BYTES;
-      read_sector(setor_leitura, buffer);
-      copiarMemoria((char*) &ponteiro, (char*) &buffer[deslocamento ] , PONTEIRO_EM_BYTES);
-      printf("simples %d\n", ponteiro );
+        printf("Single %d\n", bloco_a_ser_lido);
+        int ponteiros_por_setor = (ponteiros_por_bloco / particoes[particao_ativa].tamanho_bloco_em_setores);
+        int bloco               = bloco_a_ser_lido - maior_bloco_caso_1;
+        int ponteiro_dado;
+        if (handle->arquivo.singleIndPtr == -1) {
+          return FALHA;
+        }
+
+        int deslocamento_bloco_ind_simples = (bloco % ponteiros_por_bloco) / ponteiros_por_setor;
+        int setor_bloco_indireto_simples = handle->arquivo.singleIndPtr + deslocamento_bloco_ind_simples;
+        read_sector(setor_bloco_indireto_simples, buffer);
+
+        int deslocamento_setor_ind_simples = (bloco % ponteiros_por_bloco) % ponteiros_por_setor;
+        int posicao_escrita_setor = deslocamento_setor_ind_simples * PONTEIRO_EM_BYTES;
+        int validade;
+
+        copiarMemoria((char*) &validade, (char*) &buffer[posicao_escrita_setor], PONTEIRO_EM_BYTES);
+        if(validade == -1){
+          return FALHA;
+        }
+        else{
+          copiarMemoria((char*) &ponteiro_dado, (char*) &buffer[posicao_escrita_setor], PONTEIRO_EM_BYTES);
+        }
+        ponteiro = ponteiro_dado;
+        //ate aqui parece ok
     }
     else if(bloco_a_ser_lido < maior_bloco_caso_3){
-      int ponteiros_por_setor = (ponteiros_por_bloco / particoes[particao_ativa].tamanho_bloco_em_setores);
-      int bloco = bloco_a_ser_lido - maior_bloco_caso_2;
-      int setor_leitura = handle->arquivo.doubleIndPtr + (bloco / ponteiros_por_bloco) / ponteiros_por_setor;
-      int deslocamento  = (bloco % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
-      read_sector(setor_leitura, buffer);
+        printf("Double %d\n", bloco_a_ser_lido);
+        int ponteiro_simples, ponteiro_dado;
+        int ponteiros_por_setor = (ponteiros_por_bloco / particoes[particao_ativa].tamanho_bloco_em_setores);
+        int bloco               = bloco_a_ser_lido - maior_bloco_caso_2;
+        if(handle->arquivo.doubleIndPtr == -1){
+          return FALHA;
+        }
 
-      int ponteiro_single;
-      copiarMemoria((char*) &ponteiro_single, (char*) &buffer[deslocamento], PONTEIRO_EM_BYTES);
+        int ponteiro_ind_dupla   = bloco / ponteiros_por_bloco;
+        int setor_ind_dupla      = handle->arquivo.doubleIndPtr + (ponteiro_ind_dupla / ponteiros_por_setor);
+        int deslocamento_bytes   = ((bloco / ponteiros_por_bloco) % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
 
-      setor_leitura      = ponteiro_single + (bloco % ponteiros_por_bloco);
-      deslocamento       = (bloco % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
-      int ponteiro_bloco_dado;
-      //le bloco de indices que aponta para outros blocos de indices
-      read_sector(handle->arquivo.doubleIndPtr, buffer);
-      //le ponteiro para bloco
-      copiarMemoria((char*) &ponteiro_bloco_dado, (char*) &buffer[deslocamento] , PONTEIRO_EM_BYTES);
-      read_sector(ponteiro_bloco_dado, buffer);
-      copiarMemoria((char*) &ponteiro, (char*) &buffer[deslocamento] , PONTEIRO_EM_BYTES);
-      printf("duplo %d\n", ponteiro );
-    }
+        read_sector(setor_ind_dupla, buffer);
+        int validade;
+        copiarMemoria((char*) &validade, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
+
+        if(validade == -1){
+          return FALHA;
+        }
+        copiarMemoria((char*) &ponteiro_simples, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
+
+        int ponteiro_ind_simples = bloco % ponteiros_por_bloco;
+        int setor_ind_simples    = ponteiro_simples + (ponteiro_ind_simples / ponteiros_por_setor);
+        deslocamento_bytes       = (bloco % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
+        read_sector(setor_ind_simples, buffer);
+
+        copiarMemoria((char*) &validade, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
+        if(validade == -1){
+          return FALHA;
+        }
+        copiarMemoria((char*) &ponteiro_dado, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
+        printf("Retornando bloco dados:   == %d\n", ponteiro_dado);
+        ponteiro = ponteiro_dado;
+      }
   }
   return ponteiro;
 }

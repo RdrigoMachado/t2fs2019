@@ -157,6 +157,7 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
     else if(bloco_a_ser_escrito < maior_bloco_caso_2){
       printf("Single %d\n", bloco_a_ser_escrito);
         int ponteiros_por_setor = (ponteiros_por_bloco / particoes[particao_ativa].tamanho_bloco_em_setores);
+
         int bloco               = bloco_a_ser_escrito - maior_bloco_caso_1;
         int ponteiro_dado;
         if (handle->arquivo.singleIndPtr == -1) {
@@ -200,7 +201,7 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
 
         int ponteiro_ind_dupla   = bloco / ponteiros_por_bloco;
         int setor_ind_dupla      = handle->arquivo.doubleIndPtr + (ponteiro_ind_dupla / ponteiros_por_setor);
-        int deslocamento_bytes   = (ponteiro_ind_dupla % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
+        int deslocamento_bytes   = ((bloco / ponteiros_por_bloco) % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
 
 
         read_sector(setor_ind_dupla, buffer);
@@ -212,6 +213,7 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
           invalidaEnderecosBloco(ponteiro_simples);
           copiarMemoria((char*) &buffer[deslocamento_bytes], (char*) &ponteiro_simples, PONTEIRO_EM_BYTES);
           write_sector(setor_ind_dupla, buffer);
+          contador_indirecao++;
           printf("Criando bloco ind simples:   == %d\n", ponteiro_simples);
         }
         else{
@@ -219,8 +221,8 @@ int retornaSetorParaEscritaDoBloco(int bloco_a_ser_escrito,int bytes_escritos, H
         }
 
         int ponteiro_ind_simples = bloco % ponteiros_por_bloco;
-        int setor_ind_simples    = ponteiro_simples + ponteiro_ind_simples / ponteiros_por_setor;
-        deslocamento_bytes       = (ponteiro_ind_simples % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
+        int setor_ind_simples    = ponteiro_simples + (ponteiro_ind_simples / ponteiros_por_setor);
+        deslocamento_bytes       = (bloco % ponteiros_por_setor) * PONTEIRO_EM_BYTES;
         read_sector(setor_ind_simples, buffer);
 
         copiarMemoria((char*) &validade, (char*) &buffer[deslocamento_bytes], PONTEIRO_EM_BYTES);
@@ -303,28 +305,36 @@ int main(){
   char nome[30] = {'a','r','q','u','i','v','o','x','\0'};
   struct t2fs_record novo;
   novo.TypeVal = TYPEVAL_REGULAR;
+  int continuar = TRUE;
 
   for(index = 0; index < 18000; index++){
 
     copiarMemoria((char*) novo.name, (char*) &index, 4);
-
     if(escrita_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){
-          printf("Erro\n");
+          printf("Erro, ultimo escrito %d\n", index);
+          getchar();
+          continuar = FALSE;
+        //  index = 18000;
     } else {
       printf("===============================================================\n");
      printf("pointer0 %d - ponter1 %d - pointerSingle %d - pointerDoubl %d\n", handle.arquivo.dataPtr[0],handle.arquivo.dataPtr[1],handle.arquivo.singleIndPtr, handle.arquivo.doubleIndPtr );
       printf("BLOCOS %d - indirecao %d ", handle.arquivo.blocksFileSize, contador_indirecao);
       print_bitmap_livre();
 
-
     }
+    if(continuar == FALSE)
+      break;
+
   }
   handle.posicao_atual = 0;
+  continuar = TRUE;
   printf("Leitura\n" );
-  for(index = 0; index < 4136; index++){
+  for(index = 0; index < 18000; index++){
     struct t2fs_record novo;
-    if(leitura_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0)
+    if(leitura_arquivo((unsigned char*)&novo, sizeof(struct t2fs_record), &handle) < 0){
       printf("Erro\n");
+      continuar = FALSE;
+    }
     else{
       printf("===============================================================\n");
       int numero;
@@ -333,6 +343,8 @@ int main(){
       printf("nome  %d \n", numero );
       printf("Size %d\n", handle.posicao_atual);
     }
+    if(continuar == FALSE)
+      break;
   }
   return 0;
 }
