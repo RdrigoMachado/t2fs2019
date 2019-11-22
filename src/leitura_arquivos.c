@@ -130,22 +130,3 @@ int leitura_arquivo(unsigned char* buffer, int bytes_a_serem_lidos, Handle* hand
   handle->posicao_atual = handle->posicao_atual + bytes_lidos;
   return SUCESSO;
 }
-
-//
-// int main(){
-//
-//   le_MBR_Preenche_Dados_Particoes();
-//   formatarParticao(1, 4);
-//   leSetorEPreencheStructSuperBloco(&super_bloco_atual, 1);
-//
-//   Handle handle;
-//   handle.arquivo.blocksFileSize = 4;
-//   handle.arquivo.bytesFileSize = 264192;
-//   handle.posicao_atual = 300;
-//   handle.arquivo.dataPtr[0] = 0;
-//   handle.arquivo.dataPtr[1] = 1;
-//   unsigned char buffer[264200];
-//   leitura_arquivo(buffer, 264200, &handle);
-//
-//   return 0;
-// }

@@ -13,6 +13,7 @@ void copiarStringToUnsigned(unsigned char *destino,  char *origem);
 char charUpperCase(char caracter);
 int  verificaSePrimeiraPalavraEMenor(char *string1, char *string2);
 int  stringSize(char *nome);
+int verificaSePalavrasSaoIguais(char* str1, char* str2);
 void copiarMemoria(char *destino, char *origem, int size);
 void copiarMemoriaParaString(char *destino, char *origem, int size);
 void converteParaBigEndian(unsigned char *valor, int size);

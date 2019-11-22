@@ -47,6 +47,7 @@ typedef struct particao{
   int blocos_para_bitmap_dados;
   int blocos_para_bitmap_inodes;
   int area_inode_em_blocos;
+  int area_dado_em_blocos;
   int blocos_disco;
   int tamanho_bloco_em_setores;
 } Particao;
@@ -54,8 +55,10 @@ typedef struct particao{
 
 typedef struct handle{
 	struct t2fs_inode arquivo;
+  struct t2fs_record entrada;
 	int posicao_atual;
 	FILE2 identificador;
+  int valido;
 }Handle;
 
 
@@ -63,6 +66,9 @@ typedef struct handle{
 Handle arquivos[MAXIMO_ARQUIVOS_ABERTOS];
 int arquivos_abertos;
 int ultimo_id_utilizado;
+
+
+
 
 Particao particoes[4];
 SuperBloco super_bloco_atual;
@@ -72,5 +78,4 @@ int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco);
 void carregaDadosParticao(SuperBloco *super_bloco, int numero_particao);
 void carregaDadosDisco();
 int formatarParticao(int numero_particao, int setores_por_bloco);
-int leitura_arquivo(unsigned char* buffer, int bytes_a_serem_lidos, Handle* handle);
 #endif

@@ -54,6 +54,8 @@ void init(int numero_particao){
   particoes[numero_particao].posicao_area_inodes = particoes[numero_particao].posicao_inicio + setores_base;
   particoes[numero_particao].posicao_area_dados  = particoes[numero_particao].posicao_area_inodes + (areaInodeEmBlocos * particoes[numero_particao].tamanho_bloco_em_setores) ;
   particoes[numero_particao].area_inode_em_blocos= areaInodeEmBlocos;
+  particoes[numero_particao].area_dado_em_blocos = areaDadosEmBlocos;
+
 }
 
 void carregaDadosParticao(SuperBloco *super_bloco, int numero_particao){
@@ -113,38 +115,22 @@ int geraSuperBlocoESalva(int numero_particao, int setores_por_bloco){
 }
 
 int formatarParticao(int numero_particao, int setores_por_bloco){
-
+  SuperBloco *superbloco;
   geraSuperBlocoESalva(numero_particao, setores_por_bloco);
-
-  if(openBitmap2 (retornaSetorDoSuperBloco(numero_particao)) != 0){
-    return FALHA;
-  }
-
+  printf("INICIO PARTICAO: %d\n",  retornaSetorDoSuperBloco(numero_particao));
   int index;
-  for(index = 0; index < particoes[numero_particao].blocos_disco; index++){
-    if (setBitmap2 (BITMAP_DADOS, index, 0) != 0){
-      return FALHA;
-    }
+  openBitmap2 (retornaSetorDoSuperBloco(numero_particao));
+  for(index = 0; index < particoes[numero_particao].area_dado_em_blocos; index++){
+    setBitmap2 (BITMAP_DADOS, index, 0);
   }
+  closeBitmap2();
+  openBitmap2 (retornaSetorDoSuperBloco(numero_particao));
 
   for(index = 0; index< particoes[numero_particao].area_inode_em_blocos; index++){
-    if (setBitmap2 (BITMAP_INODE, index, 0) != 0){
-      return FALHA;
-    }
+    setBitmap2 (BITMAP_INODE, index, 0);
   }
+  closeBitmap2();
+
+
   return SUCESSO;
 }
-
-/*
-int main(){
-  le_MBR_Preenche_Dados_Particoes();
-  formatarParticao(1, 4);
-  leSetorEPreencheStructSuperBloco(&super_bloco_atual, 1);
-  int posicao = retornaPosicaoLivreDeDadosEMarcaComoUsada();
-  printf("==========  Primeira posicao livre ==================\n");
-  printf("Posicao: %d\n", posicao);
-  printf("==========  Primeira posicao livre apos ocupar========\n");
-  posicao = retornaPosicaoLivreDeDadosEMarcaComoUsada();
-  printf("Posicao: %d\n", posicao);
-  return 0;
-}*/

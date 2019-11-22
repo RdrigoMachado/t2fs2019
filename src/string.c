@@ -17,12 +17,29 @@ void copiarStringToUnsigned(unsigned char *destino,  char *origem){
   }
 }
 
+int verificaSePalavrasSaoIguais(char* str1, char* str2){
+
+  while(*str1 != '\0' && *str2 != '\0' ){
+    if(*str1 != *str2){
+      return FALSE;
+    }
+    str1++;
+    str2++;
+  }
+  if(*str1 == '\0' && *str2 == '\0'){
+    return TRUE;
+  }
+  return FALSE;
+}
+
 char charUpperCase(char caracter){
   if (caracter >= 'a' && caracter <='z')
     return (caracter - 22);
   else
     return caracter;
 }
+
+
 
 int verificaSePrimeiraPalavraEMenor(char *string1, char *string2){
 
