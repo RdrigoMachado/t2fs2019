@@ -8,6 +8,7 @@ int retornaPosicaoLivreDeInodeEMarcaComoUsada(){
   if(openBitmap2(retornaSetorDoSuperBloco(particao_ativa)) == 0){
     posicao = searchBitmap2 (BITMAP_INODE, 0);
     setBitmap2 (BITMAP_INODE, posicao, 1);
+    closeBitmap2();
   }
   if(closeBitmap2() != 0){
     printf("NAO FOI POSSIVEL FECHAR O BITMAP, DADOS NAO SALVOS\n" );
@@ -40,7 +41,6 @@ int devolve_deslocamento_em_bytes(int numero_inode){
 
 int escrever_inode(struct t2fs_inode* inode){
   int numero_inode = retornaPosicaoLivreDeInodeEMarcaComoUsada();
-
   if(numero_inode < 0 ){
     return FALHA;
   }
@@ -51,7 +51,7 @@ int escrever_inode(struct t2fs_inode* inode){
   int deslocamento  = devolve_deslocamento_em_bytes(numero_inode);
 
   if (read_sector(numero_setor, setor) == 0){
-    copiarMemoria((char*) &setor[deslocamento], (char*) &inode, tamanho_inode);
+    copiarMemoria((char*) &setor[deslocamento], (char*) inode, tamanho_inode);
     if(write_sector(numero_setor, setor) == 0){
         return numero_inode;
     }

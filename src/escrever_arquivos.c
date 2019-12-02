@@ -67,6 +67,7 @@ int tem_blocos_livres_suficientes(int blocos_necessarios){
   int blocos_livres = 0;
   int index;
   int limite = bitmap_dados_size();
+  printf("bitmap dados %d \n",limite  );
   for(index = 0; index< limite; index++){
     if(getBitmap2(BITMAP_DADOS, index) == 0){
       blocos_livres++;
@@ -82,7 +83,10 @@ int tem_blocos_livres_suficientes(int blocos_necessarios){
 
 int blocos_necessarios_para_escrita(Handle* handle, int bytes_a_serem_escritos){
   int total_bytes          = (handle->arquivo.bytesFileSize + bytes_a_serem_escritos);
+
   int setores_necessarios  = total_bytes / tamanho_setor;
+  printf("total bytes %d\n",total_bytes );
+  printf("setores necessarios %d\n",setores_necessarios );
   if(total_bytes % tamanho_setor > 0){
     setores_necessarios++;
   }
@@ -285,6 +289,7 @@ int escrita_arquivo(unsigned char* buffer, int bytes_a_serem_escritos, Handle* h
   }
   handle->posicao_atual = handle->posicao_atual + bytes_escritos;
   handle->arquivo.bytesFileSize += bytes_escritos;
+  printf("escritos ========== %d\n", handle->arquivo.bytesFileSize);
   return SUCESSO;
 }
 

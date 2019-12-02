@@ -7,6 +7,7 @@ void copiarString(char *destino, char *origem){
     destino[i] = origem[i];
     i++;
   }
+  destino[i] = '\0';
 }
 
 void copiarStringToUnsigned(unsigned char *destino,  char *origem){

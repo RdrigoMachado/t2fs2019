@@ -28,7 +28,6 @@ void init(int numero_particao){
 
   int blocosParaSuperBloco    = 1;
   int bitsPorSetor            = tamanho_setor * 8;
-
   int bitsPorBloco            = particoes[numero_particao].tamanho_bloco_em_setores * bitsPorSetor;
 
   int tamanhoParticaoEmSetores  = particoes[numero_particao].posicao_fim - particoes[numero_particao].posicao_inicio;

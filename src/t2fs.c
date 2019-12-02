@@ -89,6 +89,7 @@ int mount(int partition) {
 	if(inicializada == FALSE)
 		inicializar();
 	carregaDadosParticao(&super_bloco_atual, partition);
+	ultima_entrada_lida = 0;
 	return SUCESSO;
 }
 
@@ -156,6 +157,7 @@ FILE2 create2 (char *filename) {
 
 	int continuar = TRUE;
 	Handle diretorio_raiz;
+//	copiarMemoria((unsigned char*) &diretorio_raiz.arquivo, diretorio, sizeof(struct t2fs_inode));
 	diretorio_raiz.arquivo = *diretorio;
 	diretorio_raiz.posicao_atual = 0;
 	int tamanho_record  =  sizeof(struct t2fs_record);
@@ -173,12 +175,13 @@ FILE2 create2 (char *filename) {
 			continuar = FALSE;
 		}
 	}
-
 	if(ja_existe_mesmo_nome == TRUE){
 		return FALHA;
 	}
 	diretorio_raiz.posicao_atual = diretorio_raiz.arquivo.bytesFileSize;
+	printf("Direotrio block usado %d", diretorio_raiz.arquivo.blocksFileSize);
 	escrita_arquivo((unsigned char*) &nova_entrada, tamanho_record, &diretorio_raiz);
+	copiarMemoria((unsigned char*) diretorio, (unsigned char*) &diretorio_raiz.arquivo,sizeof(struct t2fs_inode));
 
 	int retorno = retornaFILE2Livre(nova_entrada);
 	for(index = 0; index < MAXIMO_ARQUIVOS_ABERTOS; index++){
@@ -333,6 +336,7 @@ int opendir2 () {
 	if(inicializada == FALSE)
 		inicializar();
 	if(diretorio == NULL){
+		diretorio = malloc(sizeof(struct t2fs_inode));
 		if (ler_inode(diretorio, 0) == FALHA){
 			printf("FALHA AO LER DIRETORIO RAIZ\n");
 			return FALHA;
@@ -343,7 +347,9 @@ int opendir2 () {
 	printf("SUCESSO AO MONTAR DIRETORIO\n" );
 	if(diretorio == NULL){
 		printf("COMO ASSIM???\n");
+		return FALHA;
 	}
+	printf("AAAAAAA %d\n",diretorio->blocksFileSize );
 	return SUCESSO;
 }
 
@@ -358,22 +364,25 @@ int readdir2 (DIRENT2 *dentry) {
 
 	Handle diretorio_raiz;
 	diretorio_raiz.arquivo = *diretorio;
+	printf("diretorio byte size %d\n", diretorio_raiz.arquivo.bytesFileSize);
 	diretorio_raiz.posicao_atual = ultima_entrada_lida * tamanho;
 	int continuar = TRUE;
 	while (leitura_arquivo((unsigned char*) &aux, tamanho, &diretorio_raiz) != FALHA && continuar == TRUE){
-		if(aux.TypeVal == TYPEVAL_REGULAR){
+		printf("entrei\n" );
+		ultima_entrada_lida++;
+		if(aux.TypeVal != TYPEVAL_INVALIDO){
 			continuar = FALSE;
 			copiarMemoria((char*) dentry->name, (char*) aux.name, MAX_FILE_NAME_SIZE+1);
 			dentry->fileType = TYPEVAL_REGULAR;
 			Handle handle;
 			ler_inode(&(handle.arquivo), aux.inodeNumber);
-			handle.posicao_atual = 0;
+			printf("inode numeber %d\n",aux.inodeNumber );
 			dentry->fileSize  = handle.arquivo.bytesFileSize;
 			return 0;
 		}
 
 	}
-
+printf("passei largado \n" );
 	return -1;
 }
 
@@ -389,6 +398,7 @@ int closedir2 () {
 	for(index =0; index < MAXIMO_ARQUIVOS_ABERTOS; index++){
 		arquivos[index].valido = -1;
 	}
+	arquivos_abertos = 0;
 	diretorio = NULL;
 	return 0;
 }
@@ -413,15 +423,31 @@ int hln2(char *linkname, char *filename) {
 
 int main(){
 
-	format2(0, 4);
+	//format2(0, 4);
 	mount(0);
 	opendir2();
 
-	if(create2("chegadisso")  >= 0)
-		printf("Parece que criou\n");
+	// if(create2("chegadisso")  >= 0)
+	// 	printf("Parece que criou\n");
+	// if(create2("chegadisso2")  >= 0)
+	// 	printf("Parece que criou\n");
+	// if(create2("chegadisso3")  >= 0)
+	// 	printf("Parece que criou\n");
 
+	DIRENT2 *dentry = malloc(sizeof(DIRENT2));
+	readdir2 (dentry);
+	printf("dentry name %s\n", dentry->name );
+	DIRENT2 *dentry2 = malloc(sizeof(DIRENT2));
+	readdir2 (dentry2);
+	printf("dentry name %s\n", dentry2->name );
+	DIRENT2 *dentry3 = malloc(sizeof(DIRENT2));
+	readdir2 (dentry3);
+	printf("dentry name %s\n", dentry3->name );
+
+	printf("arquivos abertos %d\n",arquivos_abertos );
 	closedir2();
 	if(diretorio == NULL)
-	printf("SO SUCESSO\n" );
+	printf("Diretorio fechado\n" );
+	printf("arquivos abertos %d\n",arquivos_abertos );
 	return 0;
 }

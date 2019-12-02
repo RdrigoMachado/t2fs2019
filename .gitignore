@@ -1,0 +1,16 @@
+
+bin/escrever_arquivos.o
+
+bin/inodes.o
+
+bin/ler_e_escrever_no_disco.o
+
+bin/string.o
+
+bin/t2fs.o
+
+bin/t2shell.o
+
+bin/teste.o
+
+executavel
